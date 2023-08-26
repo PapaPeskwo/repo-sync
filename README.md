@@ -6,7 +6,7 @@ This tool is designed to help you automatically clone or pull all repositories f
 1. Clone the repository:
 
 ```bash
-git clone [YOUR REPO URL]
+git clone https://github.com/PapaPeskwo/repo-sync
 ```
 
 2. Install the required packages:
