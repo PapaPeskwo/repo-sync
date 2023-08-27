@@ -1,6 +1,7 @@
 # GitHub Repo Sync Tool
 
 This tool is designed to help you automatically clone or pull all repositories from your GitHub account. It's especially handy if you switch between multiple machines and want to keep your codebase up-to-date on all of them.
+
 ## Getting Started
 
 1. Clone the repository:
