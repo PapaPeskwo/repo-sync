@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import platform
 from datetime import datetime
 
-
 # Load variables from .env file
 load_dotenv()
 GITHUB_USERNAME = os.getenv('GITHUB_USERNAME')
@@ -19,14 +18,19 @@ def log(message):
     print(message, flush=True)
     log_messages.append(message)
 
-def git_pull(repo_path):
-    with subprocess.Popen(['git', 'pull'], cwd=repo_path, stdout=subprocess.PIPE, text=True) as proc:
-        while True:
-            line = proc.stdout.readline()
-            if line:
-                log(f"{repo_path.split(os.sep)[-1]}: {line.strip()}")
-            else:
-                break
+def git_clone(repo_clone_url, repo_path, protocol_choice):
+    clone_command = ['git', 'clone']
+
+    if protocol_choice == 'ssh':
+        repo_clone_url = repo_clone_url.replace('https://', 'git@github.com:')
+    else:
+        repo_clone_url = repo_clone_url  # HTTPS URL
+
+    clone_command.append(repo_clone_url)
+    clone_command.append(repo_path)
+
+    subprocess.run(clone_command, cwd=BASE_DIR)
+
 
 def get_all_user_repositories():
     page = 1
@@ -42,13 +46,9 @@ def get_all_user_repositories():
         page += 1
     return repos
 
-def filter_repositories(repos, repo_type):
-    if repo_type == 'private':
-        return [repo for repo in repos if repo['private']]
-    elif repo_type == 'public':
-        return [repo for repo in repos if not repo['private']]
-    else:
-        return repos
+def git_pull(repo_path):
+    pull_command = ['git', 'pull']
+    subprocess.run(pull_command, cwd=repo_path)
 
 def ensure_directory_exists(directory):
     if not os.path.exists(directory):
@@ -61,21 +61,25 @@ def ensure_directory_exists(directory):
             print("Invalid choice. Exiting.")
             exit(1)
 
-def open_file(path):
-    sys_platform = platform.system()
-    if sys_platform == "Windows":
-        subprocess.run(['start', path], shell=True, check=True)
-    elif sys_platform == "Darwin":  # macOS
-        subprocess.run(['open', path], check=True)
-    elif sys_platform == "Linux":
-        subprocess.run(['xdg-open', path], check=True)
+def filter_repositories(repos, repo_type):
+    if repo_type == 'private':
+        return [repo for repo in repos if repo['private']]
+    elif repo_type == 'public':
+        return [repo for repo in repos if not repo['private']]
     else:
-        print(f"Platform {sys_platform} not supported for auto-opening files.")
+        return repos
 
 
 def main():
     # Ensure BASE_DIR exists or ask user to create it
     ensure_directory_exists(BASE_DIR)
+
+    # Ask the user for the protocol choice (HTTPS or SSH)
+    while True:
+        protocol_choice = input("Choose the protocol for cloning (https/ssh): ").lower()
+        if protocol_choice in ['https', 'ssh']:
+            break
+        print("Invalid choice. Please select 'https' or 'ssh'.")
 
     # Ask the user for repository type
     while True:
@@ -100,7 +104,7 @@ def main():
             git_pull(repo_path)
         else:
             log(f"Cloning {repo_name}...")
-            subprocess.run(['git', 'clone', repo_clone_url], cwd=BASE_DIR)
+            git_clone(repo_clone_url, repo_path, protocol_choice)
 
     choice = input("\nOperations complete. Would you like to generate a log file (1) or exit (2)? ")
     if choice == "1":
