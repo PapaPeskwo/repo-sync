@@ -18,19 +18,18 @@ def log(message):
     print(message, flush=True)
     log_messages.append(message)
 
-def git_clone(repo_clone_url, repo_path, protocol_choice):
+def git_clone(repo_clone_url, repo_name, repo_path, protocol_choice):
     clone_command = ['git', 'clone']
 
     if protocol_choice == 'ssh':
-        repo_clone_url = repo_clone_url.replace('https://', 'git@github.com:')
+        repo_clone_url = f'git@github.com:{GITHUB_USERNAME}/{repo_name}.git'
     else:
-        repo_clone_url = repo_clone_url  # HTTPS URL
+        repo_clone_url = f'https://github.com/{GITHUB_USERNAME}/{repo_name}.git'
 
     clone_command.append(repo_clone_url)
     clone_command.append(repo_path)
 
     subprocess.run(clone_command, cwd=BASE_DIR)
-
 
 def get_all_user_repositories():
     page = 1
@@ -92,7 +91,7 @@ def main():
     repos = filter_repositories(repos, repo_type)
 
     for repo in repos:
-        repo_name = repo['name']
+        repo_name = repo['full_name'].split('/')[1]  # Extract the repository name
         repo_clone_url = repo['clone_url']
 
         if repo_name in SKIP_REPOS:
@@ -104,7 +103,8 @@ def main():
             git_pull(repo_path)
         else:
             log(f"Cloning {repo_name}...")
-            git_clone(repo_clone_url, repo_path, protocol_choice)
+            git_clone(repo_clone_url, repo_name, repo_path, protocol_choice)  # Pass repo_name
+
 
     choice = input("\nOperations complete. Would you like to generate a log file (1) or exit (2)? ")
     if choice == "1":
